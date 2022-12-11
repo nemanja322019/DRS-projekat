@@ -1,7 +1,7 @@
 {% extends "base.html"  %} {% block title %}Sign up{% endblock %}
 
 {% block content %}
-    
+    <form method="POST">
         <h3>Sign Up</h3>
         <div>
             <label for="name">Ime</label>
@@ -12,9 +12,9 @@
             <input type="last-name" id="last-name" name="last-name" placeholder="Prezime"/>
         </div>
         <div>
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="Email"/>
-        </div>
+            <label for="adress">Adresa</label>
+            <input type="adress" id="adress" name="adress" placeholder="Adresa"/>
+        </div> 
         <div>
             <label for="city">Grad</label>
             <input type="city" id="city" name="city" placeholder="Grad"/>
@@ -25,15 +25,16 @@
         </div>  
         <div>
             <label for="phNumber">Broj telefona</label>
-            <input type="phNumber" id="phNumber" name="phNumber" placeholder="Broj telefona"/>
+            <input type="number" id="phNumber" name="phNumber" placeholder="Broj telefona"/>
         </div>
         <div>
-            <label for="adress">Adresa</label>
-            <input type="adress" id="adress" name="adress" placeholder="Adresa"/>
-        </div> 
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="Email"/>
+        </div>
         <div>
-            <label for="passsword">Lozinka</label>
-            <input type="passsword" id="passsword" name="passsword" placeholder="Lozinka"/>
+            <label for="pasword">Lozinka</label>
+            <input type="pasword" id="pasword" name="pasword" placeholder="Lozinka"/>
         </div> 
         <button type="submit">Registruj se</button>
+    </form>
 {% endblock %}
