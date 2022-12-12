@@ -1,10 +1,26 @@
-from flask import Blueprint, render_template, request, flash
+from flask import Blueprint, render_template, request, flash, redirect, url_for
+from .models import *
+from werkzeug .security import generate_password_hash, check_password_hash
+
 
 auth = Blueprint('auth', __name__)
 
 @auth.route('/login',methods=['GET','POST'])
-@auth.route('/login')
 def login():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        user = User.query.filter_by(email=email).first()
+        if user:
+            if check_password_hash(user.password,password):
+                flash('Uspesno logovanje!',category='success')
+                return redirect(url_for('views.home'))
+            else:
+                flash('Pogresna lozinka!',category='error')
+        else:
+            flash('Email ne postoji!',category='error')
+
     return render_template("login.html")
 
 @auth.route('/logout')
@@ -12,7 +28,6 @@ def logout():
     return "<p>Logout</p>"
 
 @auth.route('/sign-up',methods=['GET','POST'])
-@auth.route('/sign-up')
 def sign_up():
     if request.method =='POST':
         name = request.form.get('name')
@@ -22,9 +37,12 @@ def sign_up():
         country = request.form.get('country')
         phNumber = request.form.get('phNumber')
         email = request.form.get('email')
-        password = request.form.get('pasword')
+        password = request.form.get('password')
 
-        if len(name) < 1:
+        user = User.query.filter_by(email=email).first()
+        if user:
+            flash('Email vec postoji!',category='error')
+        elif len(name) < 1:
             flash('Polje ime je prazno',category="error")
         elif len(last_name) < 1:
             flash('Polje prezime je prazno',category="error")
@@ -35,14 +53,16 @@ def sign_up():
         elif len(country) < 1:
             flash('Polje drzava je prazno',category="error")
         elif len(email) < 1:
-            flash('Polje emal je prazno',category="error")
+            flash('Polje email je prazno',category="error")
         elif  int(phNumber) == False or len(phNumber) < 1:
             flash('Polje broj telefona je prazno',category="error")
         elif len(password) < 1:
-            flash('Polje lozika je prazno',category="error")
+            flash('Polje lozinka je prazno',category="error")
         else:
+            new_user =  User(name=name, last_name=last_name, adress=adress,city=city,country=country,phNumber=phNumber,email=email,password = generate_password_hash(password,method='sha256'))
+            db.session.add(new_user)
+            db.session.commit()
             flash('Uspeno registrovanje',category="success")
-    
+            return redirect(url_for('views.home'))
 
-    
     return render_template("sign_up.html")
