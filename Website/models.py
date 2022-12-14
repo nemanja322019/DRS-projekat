@@ -6,7 +6,9 @@ class CreditCard(db.Model):
     name = db.Column(db.String(150))
     date = db.Column(db.String(150))
     code = db.Column(db.Integer)
+    state = db.Column(db.Integer)
     user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
+
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -19,5 +21,6 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
     verified = db.Column(db.Boolean,default= False)
+    state = db.Column(db.Integer,default = 0)
     creditCard = db.relationship('CreditCard')
    

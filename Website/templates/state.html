@@ -1,0 +1,10 @@
+{% extends "base.html"  %} {% block title %}Sign up{% endblock %}
+
+{% block content %}
+    <h1>Stanje korisnika</h1>
+    <br/>
+    <div>
+        <label style="font-size: 30px;" for="state">Trenutno stanje:</label>
+        <label style="font-size: 30px;" for="state">&nbsp{{ user.state }}</label>       
+    </div>
+{% endblock %}
