@@ -6,7 +6,7 @@ class CreditCard(db.Model):
     name = db.Column(db.String(150))
     date = db.Column(db.String(150))
     code = db.Column(db.Integer)
-    state = db.Column(db.Integer)
+    state = db.Column(db.Integer,default=10000)
     user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
 
 

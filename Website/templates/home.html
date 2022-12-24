@@ -2,4 +2,11 @@
 
 {% block content %}
     <h1>Pocetna stranica</h1>
+    <br/>
+    {% if user.verified == False %}
+        <label style="font-size: 30px;" for="verify">Nalog nije verifikovan</label>
+        <a id="verify" href="/verify">&nbsp verifikuj</a>
+    {% else %}
+        <label style="font-size: 30px;" for="verify">Nalog je verifikovan</label>
+    {% endif %}
 {% endblock %}

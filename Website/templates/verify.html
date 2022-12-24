@@ -1,0 +1,25 @@
+{% extends "base.html"  %} {% block title %}Home{% endblock %}
+
+{% block content %}
+    <form method="POST">
+        <h1>Verifikuj nalog</h1>
+        <div>
+            <label for="cardNumber">Broj:</label>
+            <input type="number" id="cardNumber" name="cardNumber" placeholder="########"/>
+        </div>
+        <div>
+            <label for="user_name">Ime:</label>
+            <input type="text" id="name" name="user_name" placeholder="Ime"/>
+        </div>
+        <div>
+            <label for="exp_date">Datum isteka kartice</label>
+            <input type="text" id="exp_date" name="exp_date" placeholder="##/##/####"/>
+        </div>
+        <div>
+            <label for="code">Sigurnosni kod</label>
+            <input type="number" id="code" name="code" placeholder="###"/>
+        </div>
+        <button type="submit">Verifikuj</button>
+    </form>
+    
+{% endblock %}
