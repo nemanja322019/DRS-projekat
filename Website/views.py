@@ -46,9 +46,13 @@ def verify():
 @login_required
 def payment():
     if request.method =='POST': 
-        ammount = request.form.get("ammount")
-        current_user.state.ammount += ammount
-        current_user.creditCard.state -= ammount
+        ammount = int(request.form.get("ammount"))
+        for state in current_user.state: 
+            if state.currency == "RSD" & state.user_id == current_user.id:
+                state.ammount = ammount + state.ammount
+        for creditCard in current_user.creditCard: 
+            if creditCard.user_id == current_user.id:
+                creditCard.state = creditCard.state - ammount
         db.session.commit()
         return redirect(url_for('views.payment'))
     

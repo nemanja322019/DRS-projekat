@@ -11,8 +11,8 @@ class CreditCard(db.Model):
     
 class State(db.Model):
     ammount = db.Column(db.Integer)
-    currency = db.Column(db.String(3), primary_key = True)
-    user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
+    currency = db.Column(db.String(3))
+    user_id = db.Column(db.Integer,db.ForeignKey('user.id'), primary_key = True)
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
