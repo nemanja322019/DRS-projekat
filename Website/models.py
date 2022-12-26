@@ -8,7 +8,11 @@ class CreditCard(db.Model):
     code = db.Column(db.Integer)
     state = db.Column(db.Integer,default=10000)
     user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
-
+    
+class State(db.Model):
+    ammount = db.Column(db.Integer)
+    currency = db.Column(db.String(3), primary_key = True)
+    user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -21,6 +25,6 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(150))
     verified = db.Column(db.Boolean,default= False)
-    state = db.Column(db.Integer,default = 0)
+    state = db.relationship('State')
     creditCard = db.relationship('CreditCard')
-   
+    

@@ -66,6 +66,9 @@ def sign_up():
             db.session.add(new_user)
             db.session.commit()
             login_user(new_user,remember=True)
+            new_state = State(ammount = 0, currency = "RSD", user_id = current_user.id)
+            db.session.add(new_state)
+            db.session.commit()
             flash('Uspesno registrovanje',category="success")
             return redirect(url_for('views.home'))
 

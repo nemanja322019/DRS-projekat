@@ -41,3 +41,16 @@ def verify():
                 return redirect(url_for('views.home'))
 
     return render_template("verify.html", user=current_user)
+
+@views.route('/payment',methods=['GET','POST'])
+@login_required
+def payment():
+    if request.method =='POST': 
+        ammount = request.form.get("ammount")
+        current_user.state.ammount += ammount
+        current_user.creditCard.state -= ammount
+        db.session.commit()
+        return redirect(url_for('views.payment'))
+    
+    
+    return render_template("payment.html", user=current_user)
