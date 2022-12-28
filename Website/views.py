@@ -47,13 +47,20 @@ def verify():
 def payment():
     if request.method =='POST': 
         ammount = int(request.form.get("ammount"))
-        for state in current_user.state: 
-            if state.currency == "RSD" & state.user_id == current_user.id:
-                state.ammount = ammount + state.ammount
-        for creditCard in current_user.creditCard: 
-            if creditCard.user_id == current_user.id:
+        
+        for creditCard in current_user.creditCard:
+            if creditCard.user_id == current_user.id and creditCard.state >= ammount:
                 creditCard.state = creditCard.state - ammount
-        db.session.commit()
+
+                for state in current_user.state: 
+                        if state.currency == "RSD" and state.user_id == current_user.id:
+                            state.ammount = ammount + state.ammount
+
+                db.session.commit()
+                flash('Uspesno uplacen novac!',category='success')
+            else:
+                flash('Kartica nema toliko novca!',category='error')
+        
         return redirect(url_for('views.payment'))
     
     
