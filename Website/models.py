@@ -1,6 +1,8 @@
 from . import db
 from flask_login import UserMixin
 
+
+
 class CreditCard(db.Model):
     cardNumber = db.Column(db.Integer,primary_key = True)
     name = db.Column(db.String(150))
@@ -10,9 +12,10 @@ class CreditCard(db.Model):
     user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
     
 class State(db.Model):
-    ammount = db.Column(db.Integer)
+    ammount = db.Column(db.Float)
     currency = db.Column(db.String(3))
-    user_id = db.Column(db.Integer,db.ForeignKey('user.id'), primary_key = True)
+    id=db.Column(db.Integer,primary_key=True)
+    user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -27,4 +30,9 @@ class User(db.Model, UserMixin):
     verified = db.Column(db.Boolean,default= False)
     state = db.relationship('State')
     creditCard = db.relationship('CreditCard')
+
+class Currency(db.Model):
+    id=db.Column(db.String(3),primary_key=True)
+    conversionRate=db.Column(db.Float)
+
     

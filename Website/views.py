@@ -9,6 +9,7 @@ views = Blueprint('views', __name__)
 @views.route('/')
 @login_required
 def home():
+    
     return render_template("home.html", user=current_user)
 
 @views.route('/state')
@@ -45,23 +46,55 @@ def verify():
 @views.route('/payment',methods=['GET','POST'])
 @login_required
 def payment():
+    import requests
+
+    url = 'https://api.exchangerate.host/latest?base=RSD'
+    response = requests.get(url)
+    data = response.json()
+    dictionaryCurrency={}
+    
+    for key in data['rates']:
+        currency=Currency.query.filter_by(id=key).first()
+        dictionaryCurrency[key]=data['rates'][key]
+        
+        if(currency):
+            currency.conversionRate=data['rates'][key]
+        else:
+            new_Currency=Currency(id=key,conversionRate=data['rates'][key])
+            db.session.add(new_Currency)
+            db.session.commit()
+    
     if request.method =='POST': 
-        ammount = int(request.form.get("ammount"))
+        ammount = float(request.form.get("ammount"))
+        
+        currency= str(request.form.get("currency"))
+        
+        conversionRate=dictionaryCurrency[currency]
+        
+        check=False
         
         for creditCard in current_user.creditCard:
-            if creditCard.user_id == current_user.id and creditCard.state >= ammount:
+            if creditCard.user_id == current_user.id and (creditCard.state >= ammount):
                 creditCard.state = creditCard.state - ammount
-
+                
                 for state in current_user.state: 
-                        if state.currency == "RSD" and state.user_id == current_user.id:
-                            state.ammount = ammount + state.ammount
-
-                db.session.commit()
-                flash('Uspesno uplacen novac!',category='success')
+                    
+                    if state.currency == currency and state.user_id == current_user.id:
+                        state.ammount = ammount*conversionRate + state.ammount
+                        check=True
+                        db.session.commit()
+                        flash('Uspesno uplacen novac!',category='success')
+                        
             else:
+                check=True
                 flash('Kartica nema toliko novca!',category='error')
         
+        if not check:
+                    new_State=State(currency=currency,ammount=ammount*conversionRate,user_id = current_user.id)
+                    db.session.add(new_State)
+                    db.session.commit()
+                    flash('Uspesno uplacen novac!',category='success')
         return redirect(url_for('views.payment'))
     
     
-    return render_template("payment.html", user=current_user)
+    return render_template("payment.html", user=current_user,dictionaryCurrency=dictionaryCurrency)

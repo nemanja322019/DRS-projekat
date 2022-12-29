@@ -18,7 +18,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import User
+    from .models import User,Currency
 
     create_database(app)
 
@@ -30,6 +30,8 @@ def create_app():
     def load_user(id):
         return User.query.get(int(id))
 
+    
+    
     return app
 
 def create_database(app):
