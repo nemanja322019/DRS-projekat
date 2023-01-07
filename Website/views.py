@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from .models import *
-
+import requests
 
 
 views = Blueprint('views', __name__)
@@ -35,7 +35,11 @@ def verify():
             elif len(sec_code) < 1:
                 flash('Sigurnosni kod kartice nije unet!',category='error')  
             else:
-                new_card = CreditCard(cardNumber = cardNmb, name = user_name,date = exp_date, code = sec_code,user_id = current_user.id)
+                url = 'https://api.exchangerate.host/latest?base=RSD'
+                response = requests.get(url)
+                data = response.json()
+                conversionRate=data['rates']["USD"]
+                new_card = CreditCard(cardNumber = cardNmb, name = user_name,date = exp_date, code = sec_code,state = 10000 - 1/conversionRate,user_id = current_user.id)
                 current_user.verified = True
                 db.session.add(new_card)
                 db.session.commit()
@@ -46,7 +50,7 @@ def verify():
 @views.route('/payment',methods=['GET','POST'])
 @login_required
 def payment():
-    import requests
+    
 
     url = 'https://api.exchangerate.host/latest?base=RSD'
     response = requests.get(url)
@@ -65,36 +69,112 @@ def payment():
             db.session.commit()
     
     if request.method =='POST': 
-        ammount = float(request.form.get("ammount"))
+        ammount = request.form.get("ammount")
         
         currency= str(request.form.get("currency"))
         
         conversionRate=dictionaryCurrency[currency]
         
         check=False
-        
-        for creditCard in current_user.creditCard:
-            if creditCard.user_id == current_user.id and (creditCard.state >= ammount):
-                creditCard.state = creditCard.state - ammount
-                
-                for state in current_user.state: 
+        if len(ammount) < 1:
+            flash('Unesite iznos',category='error')
+        else:
+            ammount = float(ammount)
+            for creditCard in current_user.creditCard:
+                if creditCard.user_id == current_user.id and (creditCard.state >= ammount):
+                    creditCard.state = creditCard.state - ammount
                     
-                    if state.currency == currency and state.user_id == current_user.id:
-                        state.ammount = ammount*conversionRate + state.ammount
-                        check=True
+                    for state in current_user.state: 
+                        
+                        if state.currency == currency and state.user_id == current_user.id:
+                            state.ammount = ammount*conversionRate + state.ammount
+                            check=True
+                            db.session.commit()
+                            flash('Uspesno uplacen novac!',category='success')
+                            
+                else:
+                    check=True
+                    flash('Kartica nema toliko novca!',category='error')
+            
+            if not check:
+                        new_State=State(currency=currency,ammount=ammount*conversionRate,user_id = current_user.id)
+                        db.session.add(new_State)
                         db.session.commit()
                         flash('Uspesno uplacen novac!',category='success')
-                        
-            else:
-                check=True
-                flash('Kartica nema toliko novca!',category='error')
-        
-        if not check:
-                    new_State=State(currency=currency,ammount=ammount*conversionRate,user_id = current_user.id)
-                    db.session.add(new_State)
-                    db.session.commit()
-                    flash('Uspesno uplacen novac!',category='success')
-        return redirect(url_for('views.payment'))
+            return redirect(url_for('views.payment'))
     
     
     return render_template("payment.html", user=current_user,dictionaryCurrency=dictionaryCurrency)
+
+
+@views.route('/user-transaction',methods=['GET','POST'])
+@login_required
+def user_transaction():
+    url = 'https://api.exchangerate.host/latest?base=RSD'
+    response = requests.get(url)
+    data = response.json()
+    dictionaryCurrency={}
+    
+    for key in data['rates']:
+        currency=Currency.query.filter_by(id=key).first()
+        dictionaryCurrency[key]=data['rates'][key]
+        
+        if(currency):
+            currency.conversionRate=data['rates'][key]
+        else:
+            new_Currency=Currency(id=key,conversionRate=data['rates'][key])
+            db.session.add(new_Currency)
+            db.session.commit()
+
+    if request.method =='POST': 
+        email = request.form.get('email')
+        ammount = request.form.get("ammount")
+        currency= str(request.form.get("currency"))
+        conversionRate=dictionaryCurrency[currency]
+
+        user = User.query.filter_by(email=email).first()
+
+        check=False
+
+        if len(email) < 1:
+            flash('Polje email je prazno',category="error")
+        elif len(ammount) < 1:
+            flash('Polje iznos je prazno',category="error")
+        elif email == current_user.email:
+            flash('Uneli ste vas email',category="error")
+        else:
+            ammount = float(ammount)
+            if user:
+                for state in user.state: 
+                    if state.currency == currency and state.user_id == user.id:
+
+                        for creditCard in current_user.creditCard:
+                            if creditCard.user_id == current_user.id and (creditCard.state >= ammount):
+                                creditCard.state = creditCard.state - ammount
+                            else:
+                                flash('Korisnik nema toliko novca na kartici',category="error")
+                                return redirect(url_for('views.user_transaction'))
+
+                        state.ammount = ammount*conversionRate + state.ammount
+                        
+                        check=True
+                        db.session.commit()
+                        flash('Uspesno uplacen novac!',category='success')
+                    
+                if not check:
+                    for creditCard in current_user.creditCard:
+                            if creditCard.user_id == current_user.id and (creditCard.state >= ammount):
+                                creditCard.state = creditCard.state - ammount
+                            else:
+                                flash('Korisnik nema toliko novca na kartici',category="error")
+                                return redirect(url_for('views.user_transaction'))
+                    new_State=State(currency=currency,ammount=ammount*conversionRate,user_id = user.id)
+                    db.session.add(new_State)
+                    db.session.commit()
+                    flash('Uspesno uplacen novac!',category='success')
+            else:  
+                flash('Korisnik sa tim email-om ne postoji',category="error")
+                return redirect(url_for('views.user_transaction'))
+            
+    
+    return render_template("user_transaction.html", user=current_user,dictionaryCurrency=dictionaryCurrency)

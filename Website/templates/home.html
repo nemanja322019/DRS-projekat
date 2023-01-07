@@ -9,8 +9,14 @@
     {% endif %}
     {% if user.verified == True %}
     <form action="/payment">
-        <label style="font-size: 30px;"> Uplata na racun: </label>
+        <label style="font-size: 30px;"> Uplata na tekuci racun: </label>
         <input type="submit" value="Uplati" />
     </form>
+    <div>
+        <form action="user-transaction">
+            <label style="font-size: 30px;"> Uplata na tudji racun: </label>
+            <input type="submit" value="Uplati" />
+        </form>
+    </div>
     {% endif %}
 {% endblock %}
