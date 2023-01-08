@@ -22,28 +22,35 @@ def state():
 def verify():
     if request.method =='POST': 
             cardNmb = request.form.get("cardNumber")
-            user_name = request.form.get("user_name")
-            exp_date = request.form.get("exp_date")
             sec_code = request.form.get("code")
 
             if len(cardNmb) < 8:
-                flash('Broj kartice nije validan!',category='error')
-            elif len(user_name) < 1:
-                flash('Korisnicko ime nije uneto!',category='error')
-            elif len(exp_date) < 1:
-                flash('Datum isteka kartice nije unet!',category='error')    
+                flash('Broj kartice nije validan!',category='error')  
             elif len(sec_code) < 1:
                 flash('Sigurnosni kod kartice nije unet!',category='error')  
             else:
+                sec_code = int(sec_code)
                 url = 'https://api.exchangerate.host/latest?base=RSD'
                 response = requests.get(url)
                 data = response.json()
                 conversionRate=data['rates']["USD"]
-                new_card = CreditCard(cardNumber = cardNmb, name = user_name,date = exp_date, code = sec_code,state = 10000 - 1/conversionRate,user_id = current_user.id)
-                current_user.verified = True
-                db.session.add(new_card)
-                db.session.commit()
-                return redirect(url_for('views.home'))
+
+                card = CreditCard.query.filter_by(cardNumber=cardNmb).first()
+                if card:
+                    if card.code == sec_code: 
+                        card.user_id = current_user.id
+                        card.state = card.state - 1/conversionRate
+                        current_user.verified = True
+                        db.session.commit()
+                        return redirect(url_for('views.home'))
+                    else:
+                        flash('Nije dobar sigurnosni kod!',category='error')
+                        return redirect(url_for('views.verify'))
+                else:
+                    flash('Ne postoji kartica sa tim brojem!',category='error')
+                    return redirect(url_for('views.verify'))
+
+            
 
     return render_template("verify.html", user=current_user)
 
