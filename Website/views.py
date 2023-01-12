@@ -185,3 +185,46 @@ def user_transaction():
             
     
     return render_template("user_transaction.html", user=current_user,dictionaryCurrency=dictionaryCurrency)
+
+@views.route('/unregistered-transactions',methods=['GET','POST'])
+@login_required
+def unregistered_transactions():
+        if request.method =='POST':
+            cardNumber = request.form.get('cardNumber')
+            ammount = request.form.get("ammount")
+            name = request.form.get("name")
+            code = request.form.get("code")
+
+            creditCard = CreditCard.query.filter_by(cardNumber=cardNumber).first()
+            print(code)
+
+            if len(cardNumber) < 1:
+                flash('Polje broj kartice je prazno',category="error")
+            elif len(name) < 1:
+                flash('Polje ime je prazno',category="error")
+            elif len(code) < 1:
+                flash('Polje kod je prazno',category="error")
+            elif len(ammount) < 1:
+                flash('Polje kolicina je prazno',category="error")
+            else:
+                ammount = float(ammount)
+                code = int(code)
+                if creditCard and creditCard.name == name and creditCard.code == code:
+                    for currentCreditCard in current_user.creditCard:
+                        if currentCreditCard.user_id == current_user.id and (currentCreditCard.state >= ammount):
+                            currentCreditCard.state = currentCreditCard.state - ammount
+                            creditCard.state = creditCard.state + ammount
+                                    
+                            db.session.commit()
+                            flash('Uspesno uplacen novac!',category='success')
+                            return redirect(url_for('views.home'))
+                        else:
+                            flash('Korisnik nema dovoljno sredstava na kartici.',category="error")
+                            return redirect(url_for('views.unregistered_transactions'))
+                else:
+                    flash('Trazena kartica ne postoji.',category="error")
+                    return redirect(url_for('views.unregistered_transactions'))
+                    
+        
+    
+        return render_template("unregistered_transactions.html", user=current_user)

@@ -1,0 +1,32 @@
+{% extends "base.html"  %} {% block title %}Unregistered transactions{% endblock %}
+
+{% block content %}
+    <br/>
+    <div>
+        <label>Stanje na kartici</label>
+        {% for creditCard in user.creditCard %}
+            <label> {{ creditCard.state }} RSD</label>
+        {% endfor %}
+    </div>
+    
+    <form method="POST">
+        <h3>Podaci kartice neregistrovanog korisnika sa kojim se vrsi tranzakcija</h3>
+        <div>
+            <label for="cardNumber">Broj kartice:</label>
+            <input type="number" id="cardNumber" name="cardNumber" placeholder="########"/>
+        </div>
+        <div>
+            <label for="name">Ime korisnika kartice:</label>
+            <input type="name" id="name" name="name" placeholder="Ime"/>
+        </div>
+        <div>
+            <label for="code">Kod:</label>
+            <input type="number" id="code" name="code" placeholder="###"/>
+        </div>
+        <div>
+            <label for="ammount">Iznos za uplatu:</label>
+            <input type="number" id="ammount" name="ammount" placeholder="0"/>
+            <button type="submit">Uplati</button>
+        </div>
+    </form>
+{% endblock %}
