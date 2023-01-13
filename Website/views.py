@@ -167,7 +167,7 @@ def user_transaction():
                         state.ammount = ammount*conversionRate + state.ammount
                         
                         check=True
-                        new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount, user_id=current_user.id, currency=state.currency)
+                        new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount*conversionRate, user_id=current_user.id, currency=state.currency)
                         db.session.add(new_Transaction)
                         db.session.commit()
                         flash('Uspesno uplacen novac!',category='success')
@@ -181,7 +181,7 @@ def user_transaction():
                                 return redirect(url_for('views.user_transaction'))
                     new_State=State(currency=currency,ammount=ammount*conversionRate,user_id = user.id)
                     db.session.add(new_State)
-                    new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount, user_id=current_user.id, currency=currency)
+                    new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount*conversionRate, user_id=current_user.id, currency=currency)
                     db.session.add(new_Transaction)
                     db.session.commit()
                     flash('Uspesno uplacen novac!',category='success')
@@ -241,24 +241,55 @@ def unregistered_transactions():
 @login_required
 def transactions():
     transactions=Transaction.query.filter_by(user_id=current_user.id).all()
-    sort=request.form.get("sort")
-    id=request.form.get("id")
-    type=request.form.get("type")
-    state=request.form.get("state")
-    ammount=request.form.get("ammount")
-    currency=request.form.get("currency")
-    
-    
-    match sort:
-        case "kolicinaOpadajuce":
-            transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.ammount.desc())
-        case "kolicinaRastuce":
-            transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.ammount.asc())
-        case "idOpadajuce":
-            transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.id.desc())
-        case "idRastuce":
-            transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.id.asc())
-    
+    if request.method =='POST':
+        sort=request.form.get("sort")
+        id=request.form.get("id")
+        type=request.form.get("type")
+        state=request.form.get("state")
+        ammount=request.form.get("ammount")
+        currency=request.form.get("currency")
+        
+        
+        
+        match sort:
+            case "kolicinaOpadajuce":
+                transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.ammount.desc())
+            case "kolicinaRastuce":
+                transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.ammount.asc())
+            case "idOpadajuce":
+                transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.id.desc())
+            case "idRastuce":
+                transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.id.asc())
+        
+
+        transactions=list(transactions)
+
+        for transaction in transactions:
+            if len(id)>=1:
+                id=str(id)
+                if int(id)!=transaction.id:
+                    transactions.remove(transaction)
+                    continue
+            if len(type)>=1:
+                type=str(type)
+                if type!=transaction.type:
+                    transactions.remove(transaction)
+                    continue
+            if len(state)>=1:
+                state=str(state)
+                if state!=transaction.state:
+                    transactions.remove(transaction)
+                    continue
+            if len(ammount)>=1:
+                ammount=str(ammount)
+                if float(ammount)!=transaction.ammount:
+                    transactions.remove(transaction)
+                    continue
+            if len(currency)>=1:
+                currency=str(currency)
+                if currency!=transaction.currency:
+                    transactions.remove(transaction)
+                    continue
 
 
     return render_template("transactions.html", user=current_user, transactions=transactions)
