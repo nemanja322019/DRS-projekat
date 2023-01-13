@@ -30,9 +30,16 @@ class User(db.Model, UserMixin):
     verified = db.Column(db.Boolean,default= False)
     state = db.relationship('State')
     creditCard = db.relationship('CreditCard')
+    transaction = db.relationship('Transaction')
 
 class Currency(db.Model):
     id=db.Column(db.String(3),primary_key=True)
     conversionRate=db.Column(db.Float)
 
-    
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(50))
+    state = db.Column(db.String(10))
+    ammount = db.Column(db.Integer)
+    currency= db.Column(db.String(3))
+    user_id = db.Column(db.Integer,db.ForeignKey('user.id'))

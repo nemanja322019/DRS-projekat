@@ -1,0 +1,54 @@
+{% extends "base.html"  %} {% block title %}Transaction{% endblock %}
+
+{% block content %}
+<style>
+    table, th, td {
+      border:1px solid black;
+    }
+    input {
+      display: grid;
+      width: 100px;
+    }
+    label {
+      display: grid;
+    }
+    </style>
+
+<table style="width: auto">
+    <tr>
+        <th>ID</th>
+        <th>TIP</th>
+        <th>STANJE</th>
+        <th>KOLICINA</th>
+        <th>VALUTA</th>
+    </tr>
+    {% for transaction in transactions %}
+        <tr>
+            <td>{{ transaction.id }}</td>
+            <td>{{ transaction.type }}</td>
+            <td>{{ transaction.state }}</td>
+            <td>{{ transaction.ammount }}</td>
+            <td>{{ transaction.currency }}</td>
+        </tr>
+    {% endfor %}
+
+</table>
+
+<form method="POST">
+    <select name="sort" id="sort">
+        <option value="kolicinaOpadajuce">Sortiraj po KOLICINI OPADAJUCE</option>
+        <option value="kolicinaRastuce">Sortiraj po KOLICINI RASTUCE</option>
+        <option value="idOpadajuce">Sortiraj po ID OPADAJUCE</option>
+        <option value="idRastuce">Sortiraj po ID RASTUCE</option>
+        <option value="none">Ne zelim da sortiram</option>
+    </select>
+    <label>Opcije za filtriranje</label>
+    <input name="id" id="id" type="number" placeholder="ID">
+    <input name="type" id="type" type="text" placeholder="TIP">
+    <input name="state" id="state" type="text" placeholder="STANJE">
+    <input name="ammount" id="ammount" type="number" placeholder="KOLICINA">
+    <input name="currency" id="currency" type="text" placeholder="VALUTA">
+    
+    <button type="submit">Primeni</button>
+</form>
+{% endblock %}

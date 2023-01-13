@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from .models import *
 import requests
+import random
 
 
 views = Blueprint('views', __name__)
@@ -126,6 +127,7 @@ def user_transaction():
         currency=Currency.query.filter_by(id=key).first()
         dictionaryCurrency[key]=data['rates'][key]
         
+        
         if(currency):
             currency.conversionRate=data['rates'][key]
         else:
@@ -165,6 +167,8 @@ def user_transaction():
                         state.ammount = ammount*conversionRate + state.ammount
                         
                         check=True
+                        new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount, user_id=current_user.id, currency=state.currency)
+                        db.session.add(new_Transaction)
                         db.session.commit()
                         flash('Uspesno uplacen novac!',category='success')
                     
@@ -177,6 +181,8 @@ def user_transaction():
                                 return redirect(url_for('views.user_transaction'))
                     new_State=State(currency=currency,ammount=ammount*conversionRate,user_id = user.id)
                     db.session.add(new_State)
+                    new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount, user_id=current_user.id, currency=currency)
+                    db.session.add(new_Transaction)
                     db.session.commit()
                     flash('Uspesno uplacen novac!',category='success')
             else:  
@@ -214,7 +220,8 @@ def unregistered_transactions():
                         if currentCreditCard.user_id == current_user.id and (currentCreditCard.state >= ammount):
                             currentCreditCard.state = currentCreditCard.state - ammount
                             creditCard.state = creditCard.state + ammount
-                                    
+                            new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount, user_id=current_user.id, currency="RSD")
+                            db.session.add(new_Transaction)       
                             db.session.commit()
                             flash('Uspesno uplacen novac!',category='success')
                             return redirect(url_for('views.home'))
@@ -228,3 +235,30 @@ def unregistered_transactions():
         
     
         return render_template("unregistered_transactions.html", user=current_user)
+
+
+@views.route('/transactions',methods=['GET','POST'])
+@login_required
+def transactions():
+    transactions=Transaction.query.filter_by(user_id=current_user.id).all()
+    sort=request.form.get("sort")
+    id=request.form.get("id")
+    type=request.form.get("type")
+    state=request.form.get("state")
+    ammount=request.form.get("ammount")
+    currency=request.form.get("currency")
+    
+    
+    match sort:
+        case "kolicinaOpadajuce":
+            transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.ammount.desc())
+        case "kolicinaRastuce":
+            transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.ammount.asc())
+        case "idOpadajuce":
+            transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.id.desc())
+        case "idRastuce":
+            transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.id.asc())
+    
+
+
+    return render_template("transactions.html", user=current_user, transactions=transactions)
