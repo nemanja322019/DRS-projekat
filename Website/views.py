@@ -1,11 +1,16 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
-from flask_login import login_required, current_user
+from flask import Blueprint, render_template, request, flash, redirect, url_for, Flask, copy_current_request_context
+from flask_login import login_required, current_user, login_user
 from .models import *
 import requests
 import random
-
+import threading
+import time  
 
 views = Blueprint('views', __name__)
+ 
+
+
+
 
 @views.route('/')
 @login_required
@@ -195,34 +200,26 @@ def user_transaction():
 @views.route('/unregistered-transactions',methods=['GET','POST'])
 @login_required
 def unregistered_transactions():
-        if request.method =='POST':
-            cardNumber = request.form.get('cardNumber')
-            ammount = request.form.get("ammount")
-            name = request.form.get("name")
-            code = request.form.get("code")
-
-            creditCard = CreditCard.query.filter_by(cardNumber=cardNumber).first()
-            print(code)
-
-            if len(cardNumber) < 1:
-                flash('Polje broj kartice je prazno',category="error")
-            elif len(name) < 1:
-                flash('Polje ime je prazno',category="error")
-            elif len(code) < 1:
-                flash('Polje kod je prazno',category="error")
-            elif len(ammount) < 1:
-                flash('Polje kolicina je prazno',category="error")
-            else:
+    @copy_current_request_context
+    def Thread1(ammount,name,code,creditCard):
                 ammount = float(ammount)
                 code = int(code)
+                time.sleep(20)
+                print(current_user)
+                print(creditCard.state)
                 if creditCard and creditCard.name == name and creditCard.code == code:
                     for currentCreditCard in current_user.creditCard:
                         if currentCreditCard.user_id == current_user.id and (currentCreditCard.state >= ammount):
                             currentCreditCard.state = currentCreditCard.state - ammount
                             creditCard.state = creditCard.state + ammount
+                            new_creditCard = CreditCard(cardNumber=creditCard.cardNumber,name=creditCard.name,date=creditCard.date,code=creditCard.code,state=creditCard.state,user_id=creditCard.user_id)
+                            db.session.delete(creditCard)
+                            db.session.add(new_creditCard)
+                            print(creditCard.state)
                             new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount, user_id=current_user.id, currency="RSD")
                             db.session.add(new_Transaction)       
                             db.session.commit()
+                            
                             flash('Uspesno uplacen novac!',category='success')
                             return redirect(url_for('views.home'))
                         else:
@@ -231,10 +228,32 @@ def unregistered_transactions():
                 else:
                     flash('Trazena kartica ne postoji.',category="error")
                     return redirect(url_for('views.unregistered_transactions'))
-                    
-        
+
+    if request.method =='POST':
+        cardNumber = request.form.get('cardNumber')
+        ammount = request.form.get("ammount")
+        name = request.form.get("name")
+        code = request.form.get("code")
+
+        creditCard = CreditCard.query.filter_by(cardNumber=cardNumber).first()
+        if len(cardNumber) < 1:
+                flash('Polje broj kartice je prazno',category="error")
+        elif len(name) < 1:
+            flash('Polje ime je prazno',category="error")
+        elif len(code) < 1:
+            flash('Polje kod je prazno',category="error")
+        elif len(ammount) < 1:
+            flash('Polje kolicina je prazno',category="error")
+        else:
+            flash('Ovo ce da potraje par sekundi',category="success")
+            print(current_user)
+            thread = threading.Thread(target=Thread1,args=(ammount,name,code,creditCard))
+            thread.start()
+           
+            
     
-        return render_template("unregistered_transactions.html", user=current_user)
+    return render_template("unregistered_transactions.html", user=current_user)
+    
 
 
 @views.route('/transactions',methods=['GET','POST'])
