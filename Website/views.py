@@ -119,10 +119,54 @@ def payment():
     
     return render_template("payment.html", user=current_user,dictionaryCurrency=dictionaryCurrency)
 
-
+################################################################################################
 @views.route('/user-transaction',methods=['GET','POST'])
 @login_required
 def user_transaction():
+    @copy_current_request_context
+    def Thread2(ammount, email, currency, conversionRate):
+        ammount = float(ammount)
+        user = User.query.filter_by(email=email).first()
+        new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount*conversionRate, user_id=current_user.id, currency=currency)
+        db.session.add(new_Transaction)
+        db.session.commit()
+        time.sleep(10)
+        if user:
+            for state in user.state: 
+                if state.currency == currency and state.user_id == user.id:
+
+                    for creditCard in current_user.creditCard:
+                        if creditCard.user_id == current_user.id and (creditCard.state >= ammount):
+                            creditCard.state = creditCard.state - ammount
+                        else:
+                            new_Transaction.state = 'Odbijeno'
+                            db.session.commit()
+                            return
+
+                    state.ammount = ammount*conversionRate + state.ammount
+                    
+                    check=True
+                    new_Transaction.state = 'Obradjeno'
+                    db.session.commit()
+                
+            if not check:
+                for creditCard in current_user.creditCard:
+                        if creditCard.user_id == current_user.id and (creditCard.state >= ammount):
+                            creditCard.state = creditCard.state - ammount
+                        else:
+                            new_Transaction.state = 'Odbijeno'
+                            db.session.commit()
+                            return
+                new_State=State(currency=currency,ammount=ammount*conversionRate,user_id = user.id)
+                db.session.add(new_State)
+                new_Transaction.state = 'Obradjeno'
+                db.session.commit()
+        else:  
+            new_Transaction.state = 'Odbijeno'
+            db.session.commit()
+            return
+
+
     url = 'https://api.exchangerate.host/latest?base=RSD'
     response = requests.get(url)
     data = response.json()
@@ -146,8 +190,6 @@ def user_transaction():
         currency= str(request.form.get("currency"))
         conversionRate=dictionaryCurrency[currency]
 
-        user = User.query.filter_by(email=email).first()
-
         check=False
 
         if len(email) < 1:
@@ -157,45 +199,14 @@ def user_transaction():
         elif email == current_user.email:
             flash('Uneli ste vas email',category="error")
         else:
-            ammount = float(ammount)
-            if user:
-                for state in user.state: 
-                    if state.currency == currency and state.user_id == user.id:
-
-                        for creditCard in current_user.creditCard:
-                            if creditCard.user_id == current_user.id and (creditCard.state >= ammount):
-                                creditCard.state = creditCard.state - ammount
-                            else:
-                                flash('Korisnik nema toliko novca na kartici',category="error")
-                                return redirect(url_for('views.user_transaction'))
-
-                        state.ammount = ammount*conversionRate + state.ammount
-                        
-                        check=True
-                        new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount*conversionRate, user_id=current_user.id, currency=state.currency)
-                        db.session.add(new_Transaction)
-                        db.session.commit()
-                        flash('Uspesno uplacen novac!',category='success')
-                    
-                if not check:
-                    for creditCard in current_user.creditCard:
-                            if creditCard.user_id == current_user.id and (creditCard.state >= ammount):
-                                creditCard.state = creditCard.state - ammount
-                            else:
-                                flash('Korisnik nema toliko novca na kartici',category="error")
-                                return redirect(url_for('views.user_transaction'))
-                    new_State=State(currency=currency,ammount=ammount*conversionRate,user_id = user.id)
-                    db.session.add(new_State)
-                    new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount*conversionRate, user_id=current_user.id, currency=currency)
-                    db.session.add(new_Transaction)
-                    db.session.commit()
-                    flash('Uspesno uplacen novac!',category='success')
-            else:  
-                flash('Korisnik sa tim email-om ne postoji',category="error")
-                return redirect(url_for('views.user_transaction'))
+            flash('Ovo ce da potraje par minuta',category="success")
+            thread2 = threading.Thread(target=Thread2,args=(ammount, email, currency, conversionRate))
+            thread2.start()
             
     
     return render_template("user_transaction.html", user=current_user,dictionaryCurrency=dictionaryCurrency)
+################################################################################################################
+
 
 @views.route('/unregistered-transactions',methods=['GET','POST'])
 @login_required
@@ -236,8 +247,8 @@ def unregistered_transactions():
             flash('Polje kolicina je prazno',category="error")
         else:
             flash('Ovo ce da potraje par minuta',category="success")
-            thread = threading.Thread(target=Thread1,args=(ammount,cardNumber))
-            thread.start()
+            thread1 = threading.Thread(target=Thread1,args=(ammount,cardNumber))
+            thread1.start()
            
             
     
