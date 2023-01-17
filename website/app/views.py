@@ -130,6 +130,7 @@ def user_transaction():
         new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount*conversionRate, user_id=current_user.id, currency=currency)
         db.session.add(new_Transaction)
         db.session.commit()
+        check=False
         time.sleep(10)
         if user:
             for state in user.state: 
@@ -189,8 +190,6 @@ def user_transaction():
         ammount = request.form.get("ammount")
         currency= str(request.form.get("currency"))
         conversionRate=dictionaryCurrency[currency]
-
-        check=False
 
         if len(email) < 1:
             flash('Polje email je prazno',category="error")

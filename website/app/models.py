@@ -37,7 +37,8 @@ class Currency(db.Model):
     conversionRate=db.Column(db.Float)
 
 class Transaction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    prim_key = db.Column(db.Integer,primary_key= True)
+    id = db.Column(db.Integer)
     type = db.Column(db.String(50))
     state = db.Column(db.String(10))
     ammount = db.Column(db.Integer)
