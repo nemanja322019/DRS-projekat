@@ -5,26 +5,27 @@ from flask_login import LoginManager
 
 db = SQLAlchemy()
 DB_NAME = "database.db"
+application = Flask(__name__)
 
 def create_app():
-    app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'qweqweqwe'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
-    db.init_app(app)
+    
+    application.config['SECRET_KEY'] = 'qweqweqwe'
+    application.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+    db.init_app(application)
 
     from .views import views
     from .auth import auth
 
-    app.register_blueprint(views, url_prefix='/')
-    app.register_blueprint(auth, url_prefix='/')
+    application.register_blueprint(views, url_prefix='/')
+    application.register_blueprint(auth, url_prefix='/')
 
     from .models import User,Currency
 
-    create_database(app)
+    create_database(application)
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
-    login_manager.init_app(app)
+    login_manager.init_app(application)
 
     @login_manager.user_loader
     def load_user(id):
@@ -32,7 +33,7 @@ def create_app():
 
     
     
-    return app
+    return application
 
 def create_database(app):
     if not path.exists('instance/' + DB_NAME):
@@ -53,3 +54,6 @@ def create_database(app):
             db.session.add(new_card5)
             db.session.commit()
             print("Created database!")
+
+create_app()
+

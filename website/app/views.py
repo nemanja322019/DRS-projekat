@@ -269,7 +269,7 @@ def transactions():
         currency=request.form.get("currency")
         
         
-        
+    
         match sort:
             case "kolicinaOpadajuce":
                 transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.ammount.desc())
@@ -310,5 +310,5 @@ def transactions():
                     transactions.remove(transaction)
                     continue
 
-
+        
     return render_template("transactions.html", user=current_user, transactions=transactions)
