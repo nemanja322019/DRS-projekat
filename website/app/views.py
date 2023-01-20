@@ -215,7 +215,7 @@ def unregistered_transactions():
                 creditCard = CreditCard.query.filter_by(cardNumber=cardNumber).first()
                 ammount = float(ammount)
 
-                new_Transaction=Transaction(id=random.randint(0,101),type="user-transaction",state='U obradi',ammount=ammount, user_id=current_user.id, currency="RSD")
+                new_Transaction=Transaction(id=random.randint(0,101),type="unregistered-transaction",state='U obradi',ammount=ammount, user_id=current_user.id, currency="RSD")
                 db.session.add(new_Transaction)       
                 db.session.commit()
                 time.sleep(10)
@@ -280,34 +280,24 @@ def transactions():
                 transactions=Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.id.asc())
         
 
-        transactions=list(transactions)
+        #transactions=list(transactions)
 
-        for transaction in transactions:
-            if len(id)>=1:
-                id=str(id)
-                if int(id)!=transaction.id:
-                    transactions.remove(transaction)
-                    continue
-            if len(type)>=1:
-                type=str(type)
-                if type!=transaction.type:
-                    transactions.remove(transaction)
-                    continue
-            if len(state)>=1:
-                state=str(state)
-                if state!=transaction.state:
-                    transactions.remove(transaction)
-                    continue
-            if len(ammount)>=1:
-                ammount=str(ammount)
-                if float(ammount)!=transaction.ammount:
-                    transactions.remove(transaction)
-                    continue
-            if len(currency)>=1:
-                currency=str(currency)
-                if currency!=transaction.currency:
-                    transactions.remove(transaction)
-                    continue
+
+        if len(id)>=1:
+            id=int(id)
+            transactions=Transaction.query.filter_by(user_id=current_user.id,id=id)
+        if len(type)>=1:
+            type=str(type)
+            transactions=Transaction.query.filter_by(user_id=current_user.id,type=type)
+        if len(state)>=1:
+            state=str(state)
+            transactions=Transaction.query.filter_by(user_id=current_user.id,state=state)
+        if len(ammount)>=1:
+            ammount=float(ammount)
+            transactions=Transaction.query.filter_by(user_id=current_user.id,ammount=ammount)
+        if len(currency)>=1:
+            currency=str(currency)
+            transactions=Transaction.query.filter_by(user_id=current_user.id,currency=currency)
 
         
     return render_template("transactions.html", user=current_user, transactions=transactions)
